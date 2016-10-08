@@ -9,13 +9,15 @@ function game_one(){
     var defaultglprogram;
     
     // Framebuffer data
-    var fb_count = 3;
+    var fb_count = 4;
     // Framebuffers
     var fbs = [];
     // Framebuffer textures
     var fb_texs = [];
     // Depth buffer
     var depth_bufs = [];
+
+    var frame = 0;
     
 	var mouse = [];
 
@@ -187,31 +189,49 @@ function game_one(){
             }
         }
 	}
-	
+
 	function draw_gl(can, gl){
         var time = (new Date().getTime()) % 10000 / 1000;
 
         if(defaultglprogram == null){
             return;
         }
+
+        // Set frame attribute
+        var frameAttribute = gl.getUniformLocation(defaultglprogram, "frame");
+        gl.uniform1i(frameAttribute, frame);
+        // And why not increment it right now
+        frame++;
+        
         
 		var timeAttribute = gl.getUniformLocation(defaultglprogram, "time");
 		gl.uniform1f(timeAttribute, time);
 		
 		// Screen ratio
 		var ratio = can.width / can.height;
-		
 		var ratioAttribute = gl.getUniformLocation(defaultglprogram, "ratio");
-        var passAttribute = gl.getUniformLocation(defaultglprogram, "pass");
+        gl.uniform1f(ratioAttribute, ratio);
+
+        // Pixel width
+        var pixel_w = 1.0 / can.width;
+		var pwAttribute = gl.getUniformLocation(defaultglprogram, "pixelw");
+        gl.uniform1f(pwAttribute, pixel_w);
+
+        // Pixel height
+        var pixel_h = 1.0 / can.height;
+		var phAttribute = gl.getUniformLocation(defaultglprogram, "pixelh");
+        gl.uniform1f(phAttribute, pixel_h);
+
         
-		gl.uniform1f(ratioAttribute, ratio);
-		
 		// Mouse
 		var x = mouse[0] / can.width * ratio;
 		var y = - mouse[1] / can.height;
 		var mouseAttribute = gl.getUniformLocation(defaultglprogram, "mouse");
 		gl.uniform2fv(mouseAttribute, [x, y]);
-
+        
+        // We'll use that in the passes loop
+        var passAttribute = gl.getUniformLocation(defaultglprogram, "pass");
+        
         for(var i = 0; i < fb_count; i++){
             var fb = fbs[i];
             var tex = fb_texs[i];
@@ -243,7 +263,7 @@ function game_one(){
         gl.viewport(0, 0, w, h);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 	}
-
+    
 	function draw(){
 		draw_gl(can, gl);
 		window.requestAnimationFrame(draw);
