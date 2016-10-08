@@ -33,12 +33,8 @@ vec4 decode(vec4 vin){
 
 vec4 particles(float x, float y){
     vec4 col = vec4(0.0);
-    float lines = cos(100.0 * x);
-    col.r = lines < 0.0 ? 0.0: lines;
-    lines = cos(100.0 * y);
-    col.r += lines < 0.0 ? 0.0: lines;
-    col.r = pow(col.r, 30.0);
-
+    col.r = cos(100.0 * x) * cos(100.0 * y);
+    
     return col;
 }
 
@@ -97,6 +93,9 @@ void main(void){
                 new_col += dy * bottom;
             }
 
+            new_col += 
+                0.4 * cos(PI * time) * particles(x, y).rgb;
+                
             col.rgb = new_col;
         }
     } else if (pass == 2) {
