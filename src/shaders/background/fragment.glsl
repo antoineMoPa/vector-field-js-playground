@@ -31,16 +31,48 @@ vec4 decode(vec4 vin){
     return vout;
 }
 
+vec4 encodepos(vec2 pos){
+    vec4 ret;
+    
+    pos = (pos + 1.0) / 2.0;
+
+    pos *= 255.0 * 255.0;
+    
+    float mx = mod(pos.x, 255.0);
+    ret.w = (pos.x - mx) / 255.0 / 255.0;
+    ret.x = mx / 255.0;
+    float my = mod(pos.y, 255.0);
+    ret.y = (pos.y - my) / 255.0 / 255.0;
+    ret.z = my / 255.0;
+    
+    return ret;
+}
+
+vec2 decodepos(vec4 col){
+    vec2 ret;
+
+    float x = col.w * 255.0 + col.x;
+    float y = col.y * 255.0 + col.z;
+    
+    ret = vec2(x,y) / 255.0;
+
+    ret *= 2.0;
+    ret -= vec2(1.0);
+    
+    return ret;
+}
+
+
 vec4 particles(float x, float y){
     vec4 col = vec4(0.0);
     col.r = cos(100.0 * x) * cos(100.0 * y);
-    
+    col.r = pow(col.r, 2.0);
     return col;
 }
 
 void main(void){
 	float x = (UV.x - 0.5) * ratio;
-	float y = UV.y - 0.5;
+	float y = (UV.y - 0.5);
     
 	float radius = sqrt(pow(x/ratio,2.0) + pow(y,2.0));
 
@@ -51,52 +83,30 @@ void main(void){
         if(frame == 0){
             float angle = atan(y,x);
             angle += PI/2.0;
-            
+            vec2 d;
             // Init
-            col.x = 0.3 * cos(angle);
-            col.y = 0.3 * sin(angle);
+            d.x = pixelw * 0.3 * cos(angle);
+            d.y = pixelh * 0.3 * sin(angle);
             // Bring values between 0 and 1
-            col = encode(col);
+            col = encodepos(d);
         } else {
-            col = texture2D(pass2, UV);
+            vec2 d = decodepos(texture2D(pass2, UV));
+            col = encodepos(d);
         }
     } else if (pass == 1) {
         // Particle pass
         if(frame == 0){
             // Init
-            col = particles(x, y);
+            col = encodepos(vec2(x,y));
         } else {
-            vec3 new_col;
-            vec3 old_col = texture2D(pass3, UV).rgb;
+            vec4 old_col = texture2D(pass3, UV);
+            vec2 pos = decodepos(old_col);
             
-            vec3 top    = texture2D(pass3, UV + vec2(0.0,pixelh)).rgb;
-            vec3 bottom = texture2D(pass3, UV + vec2(0.0,-pixelh)).rgb;
-            vec3 left   = texture2D(pass3, UV + vec2(-pixelw,0.0)).rgb;
-            vec3 right  = texture2D(pass3, UV + vec2(pixelw,0.0)).rgb;
+            vec2 d = decodepos(texture2D(pass0, UV));
             
-
-            vec2 d = decode(texture2D(pass0, UV)).xy;
-            float dx = d.x;
-            float dy = d.y;
-
-            new_col = (1.0 - abs(dx) - abs(dy)) * old_col;
+            pos += 1.0 * d;
             
-            if(dx < 0.0){
-                new_col += -dx * right;
-            } else {
-                new_col += dx * left;
-            }
-            
-            if(dy < 0.0){
-                new_col += -dy * top;
-            } else {
-                new_col += dy * bottom;
-            }
-
-            new_col += 
-                0.4 * cos(PI * time) * particles(x, y).rgb;
-                
-            col.rgb = new_col;
+            col = encodepos(pos);
         }
     } else if (pass == 2) {
         // Pass 0 backup
@@ -106,10 +116,13 @@ void main(void){
         col = texture2D(pass1, UV);
     } else if (pass == 4) {
         // Render pass
-        col = texture2D(pass3, UV);
-        col += texture2D(pass0, UV);
+        vec2 pos = decodepos(texture2D(pass3, UV));
+        
+        col = particles(pos.x, pos.y);
+        col.gb = pos;
+        //col += texture2D(pass0, UV);
+        col.a = 1.0;
     }
-
-    col.a = 1.0;
+    
 	gl_FragColor = col;
 }
