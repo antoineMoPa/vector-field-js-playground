@@ -7,6 +7,8 @@ uniform float time;
 uniform int frame;
 uniform float ratio;
 uniform int pass;
+uniform float width;
+uniform float height;
 uniform float pixelw;
 uniform float pixelh;
 
@@ -36,10 +38,11 @@ vec4 encodepos(vec2 pos){
 
     pos.x = mod(pos.x + 1.0, 1.0) - 1.0;
     pos.y = mod(pos.y + 1.0, 1.0) - 1.0;
-        
+    
     pos = (pos + 1.0) / 2.0;
 
-    pos *= 255.0 * 255.0;
+    pos.x *= 255.0 * 255.0;
+    pos.y *= 255.0 * 255.0;
     
     float mx = mod(pos.x, 255.0);
     ret.w = (pos.x - mx) / 255.0 / 255.0;
@@ -58,10 +61,9 @@ vec2 decodepos(vec4 col){
     float y = col.y * 255.0 + col.z;
     
     ret = vec2(x,y) / 255.0;
-    
     ret *= 2.0;
     ret -= vec2(1.0);
-    
+
     return ret;
 }
 
@@ -69,7 +71,7 @@ vec2 decodepos(vec4 col){
 vec4 particles(float x, float y){
     vec4 col = vec4(0.0);
     
-    col.b = cos(20.0 * x) * cos(20.0 * y);
+    col.b = cos(100.0 * x) * cos(100.0 * y) < 0.0 ? 1.0: 0.0;
 
     return col;
 }
@@ -85,12 +87,12 @@ void main(void){
     if(pass == 0){
         // Vector field pass
         if(frame == 0){
-            vec2 d = vec2(-y + 0.4,x + 0.1);
+            vec2 d = vec2(-y,x);
             
             d = normalize(d);
 
             d *= pixelh * PI * radius;
-            
+
             // Bring values between 0 and 1
             col = encodepos(d);
         } else {
@@ -107,7 +109,7 @@ void main(void){
             vec2 pos = decodepos(old_col);
             vec2 d = decodepos(texture2D(pass0, UV));
             
-            pos += d;
+            pos += vec2(-y,x) * pixelh;
             
             col = encodepos(pos);
         }

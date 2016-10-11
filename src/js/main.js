@@ -207,7 +207,17 @@ function game_one(){
         
 		var timeAttribute = gl.getUniformLocation(defaultglprogram, "time");
 		gl.uniform1f(timeAttribute, time);
-		
+
+        		
+		// Width
+		var wAttribute = gl.getUniformLocation(defaultglprogram, "width");
+        gl.uniform1f(wAttribute, can.width);
+        
+        // Height
+		var hAttribute = gl.getUniformLocation(defaultglprogram, "height");
+        gl.uniform1f(hAttribute, can.height);
+
+        
 		// Screen ratio
 		var ratio = can.width / can.height;
 		var ratioAttribute = gl.getUniformLocation(defaultglprogram, "ratio");
