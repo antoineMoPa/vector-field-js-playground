@@ -16,7 +16,7 @@ uniform sampler2D pass2;
 uniform sampler2D pass3;
 uniform sampler2D pass4;
 
-#define PI 3.1416
+#define PI 3.141592653589793
 
 /* 
    We need an encoder and decoder to store -1 to +1 values
@@ -34,9 +34,18 @@ vec4 decode(vec4 vin){
 vec4 encodepos(vec2 pos){
     vec4 ret;
     
-    pos = (pos + 1.0) / 2.0;
-
-    pos *= 255.0 * 255.0;
+    //pos.x = mod(pos.x + 1.0, 1.0) - 1.0;
+    //pos.y = mod(pos.y + 1.0, 1.0) - 1.0;
+    
+    pos = ((
+               (
+                   255.0 * 255.0 * pos +
+                   255.0 * 255.0 * vec2(1.0)
+                   )
+               /
+               2.0
+               )
+        );
     
     float mx = mod(pos.x, 255.0);
     ret.w = (pos.x - mx) / 255.0 / 255.0;
@@ -55,7 +64,7 @@ vec2 decodepos(vec4 col){
     float y = col.y * 255.0 + col.z;
     
     ret = vec2(x,y) / 255.0;
-
+    
     ret *= 2.0;
     ret -= vec2(1.0);
     
@@ -66,7 +75,6 @@ vec2 decodepos(vec4 col){
 vec4 particles(float x, float y){
     vec4 col = vec4(0.0);
     col.r = cos(100.0 * x) * cos(100.0 * y);
-    col.r = pow(col.r, 2.0);
     return col;
 }
 
@@ -81,12 +89,12 @@ void main(void){
     if(pass == 0){
         // Vector field pass
         if(frame == 0){
-            float angle = atan(y,x);
-            angle += PI/2.0;
-            vec2 d;
-            // Init
-            d.x = pixelw * 0.3 * cos(angle);
-            d.y = pixelh * 0.3 * sin(angle);
+            vec2 d = vec2(-y,x);
+            
+            d = normalize(d);
+
+            d *= 0.001;
+            
             // Bring values between 0 and 1
             col = encodepos(d);
         } else {
@@ -101,26 +109,25 @@ void main(void){
         } else {
             vec4 old_col = texture2D(pass3, UV);
             vec2 pos = decodepos(old_col);
-            
             vec2 d = decodepos(texture2D(pass0, UV));
             
-            pos += 1.0 * d;
+            pos += d;
             
             col = encodepos(pos);
         }
     } else if (pass == 2) {
-        // Pass 0 backup
+        // Pass 0 backup (vector field)
         col = texture2D(pass0, UV);
     } else if (pass == 3) {
-        // Pass 1 backup 
+        // Pass 1 backup (particle) 
         col = texture2D(pass1, UV);
     } else if (pass == 4) {
         // Render pass
         vec2 pos = decodepos(texture2D(pass3, UV));
-        
+        vec2 d = decodepos(texture2D(pass0, UV));
         col = particles(pos.x, pos.y);
-        col.gb = pos;
-        //col += texture2D(pass0, UV);
+        //col.gb = pos;
+        //col.rg += d;
         col.a = 1.0;
     }
     

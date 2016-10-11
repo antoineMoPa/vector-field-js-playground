@@ -26,6 +26,7 @@ function game_one(){
 		h = can.height = window.innerHeight;
 		draw();
         init_gl(gl);
+        frame = 0;
 	}
 
 	window.addEventListener("resize", resize);
