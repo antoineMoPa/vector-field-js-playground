@@ -33,19 +33,13 @@ vec4 decode(vec4 vin){
 
 vec4 encodepos(vec2 pos){
     vec4 ret;
-    
-    //pos.x = mod(pos.x + 1.0, 1.0) - 1.0;
-    //pos.y = mod(pos.y + 1.0, 1.0) - 1.0;
-    
-    pos = ((
-               (
-                   255.0 * 255.0 * pos +
-                   255.0 * 255.0 * vec2(1.0)
-                   )
-               /
-               2.0
-               )
-        );
+
+    pos.x = mod(pos.x + 1.0, 1.0) - 1.0;
+    pos.y = mod(pos.y + 1.0, 1.0) - 1.0;
+        
+    pos = (pos + 1.0) / 2.0;
+
+    pos *= 255.0 * 255.0;
     
     float mx = mod(pos.x, 255.0);
     ret.w = (pos.x - mx) / 255.0 / 255.0;
@@ -74,7 +68,9 @@ vec2 decodepos(vec4 col){
 
 vec4 particles(float x, float y){
     vec4 col = vec4(0.0);
-    col.r = cos(100.0 * x) * cos(100.0 * y);
+    
+    col.b = cos(20.0 * x) * cos(20.0 * y);
+
     return col;
 }
 
@@ -82,18 +78,18 @@ void main(void){
 	float x = (UV.x - 0.5) * ratio;
 	float y = (UV.y - 0.5);
     
-	float radius = sqrt(pow(x/ratio,2.0) + pow(y,2.0));
+	float radius = length(vec2(x,y));
 
 	vec4 col = vec4(0.0);
     
     if(pass == 0){
         // Vector field pass
         if(frame == 0){
-            vec2 d = vec2(-y,x);
+            vec2 d = vec2(-y + 0.4,x + 0.1);
             
             d = normalize(d);
 
-            d *= 0.001;
+            d *= pixelh * PI * radius;
             
             // Bring values between 0 and 1
             col = encodepos(d);
