@@ -1,7 +1,7 @@
 game_one();
 
 function game_one(){
-    var can = document.querySelectorAll(".game-one-canvas")[0];
+    var can = document.querySelectorAll(".canvas")[0];
     var gl = can.getContext("webgl");
     var w,h;
 
