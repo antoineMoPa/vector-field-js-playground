@@ -76,11 +76,11 @@ vec4 particles(float x, float y){
 }
 
 void main(void){
-	float x = (UV.x - 0.5);
-	float y = (UV.y - 0.5) / ratio;
-	float radius = length(vec2(x,y));
+    float x = (UV.x - 0.5);
+    float y = (UV.y - 0.5) / ratio;
+    float radius = length(vec2(x,y));
 
-	vec4 col = vec4(0.0);
+    vec4 col = vec4(0.0);
     
     if(pass == 0){
         // Vector field pass
@@ -146,5 +146,5 @@ void main(void){
         col.a = 1.0;
     }
     
-	gl_FragColor = col;
+    gl_FragColor = col;
 }
