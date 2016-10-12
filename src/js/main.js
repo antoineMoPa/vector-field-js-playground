@@ -235,8 +235,8 @@ function game_one(){
 
         
 		// Mouse
-		var x = mouse[0] / can.width * ratio;
-		var y = - mouse[1] / can.height;
+		var x = (mouse[0] / can.width - 0.5);
+		var y = (- mouse[1] / can.height + 0.5) / ratio;
 		var mouseAttribute = gl.getUniformLocation(defaultglprogram, "mouse");
 		gl.uniform2fv(mouseAttribute, [x, y]);
         

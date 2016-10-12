@@ -3,6 +3,8 @@ precision highp float;
 
 varying vec2 UV;
 varying vec3 v_position;
+
+uniform vec2 mouse;
 uniform float time;
 uniform int frame;
 uniform float ratio;
@@ -36,11 +38,8 @@ vec4 decode(vec4 vin){
 vec4 encodepos(vec2 pos){
     vec4 ret;
 
-    pos.x = mod(pos.x + 1.0, 1.0) - 1.0;
-    pos.y = mod(pos.y + 1.0, 1.0) - 1.0;
-    
     pos = (pos + 1.0) / 2.0;
-
+    
     pos.x *= 255.0 * 255.0;
     pos.y *= 255.0 * 255.0;
     
@@ -70,16 +69,15 @@ vec2 decodepos(vec4 col){
 
 vec4 particles(float x, float y){
     vec4 col = vec4(0.0);
-    
-    col.b = cos(100.0 * x) * cos(100.0 * y) < 0.0 ? 1.0: 0.0;
 
+    col.r = cos(140.0 * x) * cos(140.0 * y);
+    
     return col;
 }
 
 void main(void){
-	float x = (UV.x - 0.5) * ratio;
-	float y = (UV.y - 0.5);
-    
+	float x = (UV.x - 0.5);
+	float y = (UV.y - 0.5) / ratio;
 	float radius = length(vec2(x,y));
 
 	vec4 col = vec4(0.0);
@@ -91,12 +89,31 @@ void main(void){
             
             d = normalize(d);
 
-            d *= pixelh * PI * radius;
+            d *= PI * radius;
 
+            d = vec2(0.0);
+            
             // Bring values between 0 and 1
             col = encodepos(d);
         } else {
             vec2 d = decodepos(texture2D(pass2, UV));
+            
+            // Equilibrate fields
+            vec2 top = decodepos(texture2D(pass2, UV + vec2(0.0, pixelh)));
+            vec2 bot = decodepos(texture2D(pass2, UV - vec2(0.0, pixelh)));
+            vec2 lef = decodepos(texture2D(pass2, UV - vec2(pixelw, 0.0)));
+            vec2 rig = decodepos(texture2D(pass2, UV + vec2(pixelw, 0.0)));
+
+            d = 0.25 * (top + bot + lef + rig);
+
+            float md = distance(mouse, vec2(x,y));
+            
+            if(md < 0.03){
+                d -= (1.0 - radius/0.03) * (vec2(x, y) - md);
+            }
+
+            d *= 0.98;
+
             col = encodepos(d);
         }
     } else if (pass == 1) {
@@ -109,7 +126,7 @@ void main(void){
             vec2 pos = decodepos(old_col);
             vec2 d = decodepos(texture2D(pass0, UV));
             
-            pos += vec2(-y,x) * pixelh;
+            pos += d * pixelh;
             
             col = encodepos(pos);
         }
@@ -125,7 +142,7 @@ void main(void){
         vec2 d = decodepos(texture2D(pass0, UV));
         col = particles(pos.x, pos.y);
         //col.gb = pos;
-        //col.rg += d;
+        col.rg += d;
         col.a = 1.0;
     }
     
